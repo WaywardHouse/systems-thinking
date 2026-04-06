@@ -1,0 +1,8 @@
+_site/
+.quarto/
+*.quarto_ipynb
+.ipynb_checkpoints/
+_freeze/site_libs/
+.DS_Store
+__pycache__/
+*.pyc

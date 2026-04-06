@@ -1,0 +1,53 @@
+project:
+  type: book
+  output-dir: _site
+
+book:
+  title: "Systems Thinking for Engineers"
+  subtitle: "Feedback, complexity, and the art of intervening in the world"
+  date: last-modified
+  search: true
+  page-navigation: true
+  repo-url: https://github.com/WaywardHouse/waywardhouse-systems-thinking
+  repo-actions: [edit, issue]
+  sharing: [twitter, linkedin]
+  sidebar:
+    style: docked
+    search: true
+    collapse-level: 1
+    tools:
+      - icon: house
+        href: /
+        aria-label: Wayward House
+      - icon: grid
+        href: /learn/
+        aria-label: Learn
+      - icon: github
+        href: https://github.com/WaywardHouse/waywardhouse-systems-thinking
+        aria-label: Repository
+  chapters:
+    - index.qmd
+    - 01-what-is-a-system.qmd
+    - 02-feedback-structures.qmd
+    - 03-complexity-and-emergence.qmd
+    - 04-earth-as-a-system.qmd
+    - 05-cities-and-economies-as-systems.qmd
+    - 06-data-as-a-system.qmd
+    - 07-modelling-and-simulation.qmd
+    - 08-systems-intervention.qmd
+    - 09-exercise-answers.qmd
+
+bibliography: references.bib
+
+format:
+  html:
+    theme: none
+    toc: true
+    number-sections: true
+    code-fold: true
+    lightbox: true
+    css: lightbox.css
+    include-after-body: lightbox.html
+
+execute:
+  freeze: auto

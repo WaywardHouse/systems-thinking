@@ -1,0 +1,40 @@
+---
+title: "Systems Thinking for Engineers"
+subtitle: "Feedback, complexity, and the art of intervening in the world"
+---
+
+## What this book is for
+
+A glacier grows for three decades, then disappears in ten years. A housing market is stable for a generation, then doubles in price in eighteen months. A machine learning model works well in testing, then degrades slowly until it fails catastrophically in production. A wildfire management policy reduces average fire size — then produces the conditions for a megafire.
+
+These are not failures of analysis. They are failures of the *kind* of thinking we brought to the problem. Each of these systems has feedback, delays, nonlinearity, and emergent behaviour. Standard engineering optimization handles components. This book handles wholes.
+
+Systems thinking is not a replacement for rigorous analysis — it is a precondition for it. Before you can model a system correctly, you need to see it correctly: its stocks and flows, its feedback loops, its leverage points, its vulnerabilities to well-intentioned intervention.
+
+## Who this book is for
+
+Students in the [B.Eng. Earth Systems and Data Engineering](https://wayward.house/learn/) program encounter this book in their first year (ESDE 106), return to it in their third year when they are designing systems (ESDE 307), and use its frameworks in their final year when they are working on problems of systems change (ESDE 407, 408).
+
+But the book is also for anyone who works with complex systems and wants to think about them more clearly. No calculus is required for the first three chapters. The mathematical depth increases gradually — and it is always optional. The core ideas are accessible to careful readers without any prior technical background.
+
+## How this book connects to the Wayward House series
+
+This book sits between the [Wayward House Maths](https://wayward.house/learn/maths/core/) series and the [Computational Geography](https://wayward.house/learn/computational-geography/core/) book. The mathematics of feedback — eigenvalues, phase portraits, control theory — is developed in Maths Vol 8. The application of systems thinking to specific earth and human systems is developed in the Computational Geography book's later sections.
+
+This book is the conceptual bridge: it builds the frameworks that make both the mathematics and the applications intelligible.
+
+## Structure
+
+The book proceeds in three movements:
+
+**Chapters 1–3** build the core vocabulary: what a system is, how feedback produces behaviour, and how complexity and emergence arise from simple rules. These chapters require no calculus and no prior background.
+
+**Chapters 4–5** apply the frameworks to two domains: the Earth as a physical system (climate feedbacks, biogeochemical cycles, hazard dynamics) and cities and economies as human systems (agglomeration, urban scaling, supply chain resilience). Each chapter is self-contained — you can read Ch 4 without Ch 5 and vice versa.
+
+**Chapters 6–8** turn the lens on data and computation: pipelines as systems, machine learning as a feedback process, and the challenge of intervening in systems you helped build. These chapters are for Year 3 and 4 students who are building real systems and thinking about how to make them behave.
+
+## A note on simulation
+
+Every chapter includes a simulation exercise: a minimal Python implementation of the chapter's core model. You do not need to be a strong programmer to follow these — the code is always explained line by line before it runs. The goal is to see the system behave, not to write production code.
+
+If you want to go deeper into simulation, the [Data Engineering for Spatial Systems](https://wayward.house/learn/data-engineering/core/) book picks up where this one leaves off.
