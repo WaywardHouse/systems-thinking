@@ -380,6 +380,54 @@ plt.show()
 3. **Match this to the pipeline system from Chapter 1.** In that system, what plays the role of `T_goal`, `T0`, `k`, and `D`? Write down the analogy explicitly — identify the stock, the goal, the feedback gain, and the two delays (apportionment cycle and drilling horizon) — before reading on.
 :::
 
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from collections import deque
+
+# --- Try changing these parameters ---
+T_goal = 20.0   # Goal temperature (°C)
+T0     = 15.0   # Starting temperature (°C)
+k      = 0.5    # Feedback gain (try 0.8 to see stronger correction)
+loss   = 0.05   # Heat-loss rate (try 0 for a perfectly insulated room)
+t_end  = 240    # Duration (minutes)
+dt     = 1.0    # Time step
+
+scenarios = [
+    ( 5, "#888888", "5-min delay"),
+    (15, "#d52a2a", "15-min delay"),
+    (45, "#111111", "45-min delay"),
+]
+
+steps = int(t_end / dt) + 1
+time  = np.arange(steps) * dt
+
+fig, ax = plt.subplots(figsize=(8, 4))
+for delay_min, color, label in scenarios:
+    D_steps = int(delay_min / dt)
+    buf = deque([0.0] * D_steps, maxlen=D_steps)
+    T = np.empty(steps); T[0] = T0
+    for i in range(steps - 1):
+        gap = T_goal - T[i]
+        buf.append(k * gap)
+        heating = buf[0]
+        T[i + 1] = T[i] + (heating - loss * T[i]) * dt
+    ax.plot(time, T, color=color, linewidth=1.5, label=label)
+    ax.annotate(label, xy=(240, T[-1]), fontsize=9, color=color, ha="right", va="center")
+
+ax.axhline(y=T_goal, color="#aaa", linestyle="--", linewidth=0.8)
+ax.set_xlim(0, 240)
+ax.set_xlabel("Time (minutes)")
+ax.set_ylabel("Room temperature (°C)")
+ax.set_title(f"Thermostat with delay  (k={k}, loss={loss})")
+ax.spines["top"].set_visible(False)
+ax.spines["right"].set_visible(False)
+plt.tight_layout()
+plt.show()
+```
+:::
+
 > Figure 2.7. Room temperature over 240 minutes under three delay scenarios. With a short delay the balancing loop corrects smoothly. As delay increases, the loop overshoots its goal, generating oscillation. The 45-minute delay produces sustained cycling — the correction that was appropriate when initiated arrives after the system has already reversed direction.
 
 ---
