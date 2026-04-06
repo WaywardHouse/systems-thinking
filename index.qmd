@@ -1,5 +1,5 @@
 ---
-title: "Systems Thinking for Engineers"
+title: "Systems Thinking for Modellers"
 subtitle: "Feedback, complexity, and the art of intervening in the world"
 ---
 
