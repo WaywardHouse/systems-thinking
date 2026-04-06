@@ -300,6 +300,67 @@ plt.show()
 3. **Test Δt sensitivity.** The simulation uses DT = 0.1 yr. Rerun with DT = 1.0 yr and DT = 0.01 yr. Do the trajectories differ materially? At what step size do you see noticeable numerical drift? This is the practical meaning of choosing Δt to be less than one-quarter of the model's fastest time constant.
 :::
 
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- Try changing these parameters ---
+# Scenario parameters: (A, L0, alpha)
+# Increase alpha toward 0.10 to find the tipping point (What to try #1)
+# Add temperature forcing by setting gamma > 0 (What to try #2)
+# Change DT to test numerical sensitivity (What to try #3)
+DT    = 0.1      # Euler time step (years); try 1.0 or 0.01
+T_END = 200.0
+gamma = 0.0      # temperature forcing coefficient (try 2.0 for What to try #2)
+
+M_0, M_INIT = 1000.0, 1000.0
+
+SCENARIOS = [
+    (52.0, 45.0, 0.05, "Accumulation-dominant", "#111111", "-"),
+    (45.0, 50.0, 0.03, "Slow retreat (weak α)", "#888888", "--"),
+    (45.0, 50.0, 0.10, "Runaway (strong α)",    "#d52a2a", "-"),
+]
+
+def run(A, L0, alpha):
+    steps = int(T_END / DT) + 1
+    t = np.linspace(0, T_END, steps)
+    M = np.empty(steps); M[0] = M_INIT
+    for i in range(1, steps):
+        T_anomaly = 0.025 * t[i] if gamma > 0 else 0.0
+        ablation = L0 + alpha * (M_0 - M[i-1]) + gamma * T_anomaly
+        M[i] = max(0.0, M[i-1] + (A - ablation) * DT)
+    return t, M
+
+fig, (ax_t, ax_p) = plt.subplots(1, 2, figsize=(11, 5))
+M_phase = np.linspace(0, 1400, 600)
+for A, L0, alpha, label, color, ls in SCENARIOS:
+    t_arr, M = run(A, L0, alpha)
+    ax_t.plot(t_arr, M, color=color, linestyle=ls, linewidth=1.8, label=label)
+    rates = A - (L0 + alpha * (M_0 - M_phase))
+    ax_p.plot(M_phase, rates, color=color, linestyle=ls, linewidth=1.8, label=label)
+    if alpha > 0:
+        M_star = M_0 - (A - L0) / alpha
+        if 0 < M_star < 1400:
+            ax_p.plot(M_star, 0, "o", color=color, markersize=6,
+                      markerfacecolor="white", markeredgewidth=1.8)
+
+ax_t.axhline(M_0, color="#ccc", linewidth=0.8, linestyle=":")
+ax_t.set_xlabel("Year"); ax_t.set_ylabel("Ice mass M (Gt)")
+ax_t.set_title(f"Glacier mass balance  (DT={DT}, γ={gamma})")
+ax_t.legend(frameon=False, fontsize=8.5)
+ax_t.spines["top"].set_visible(False); ax_t.spines["right"].set_visible(False)
+
+ax_p.axhline(0, color="#ccc", linewidth=0.8)
+ax_p.set_xlabel("Ice mass M (Gt)"); ax_p.set_ylabel("dM/dt (Gt/yr)")
+ax_p.legend(frameon=False, fontsize=8.5)
+ax_p.spines["top"].set_visible(False); ax_p.spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+```
+:::
+
 :::: {.callout-note}
 ## Model implementation and ML pipeline design
 
@@ -555,6 +616,75 @@ plt.show()
 2. **Smooth the ordering correction.** Replace `adj = max(tau, 1.0)` with `adj = 3 * max(tau, 1.0)` — spread the inventory correction over three delay periods instead of one. What happens to the oscillation amplitude? What is the cost in terms of how long inventory takes to return to target after the demand step? This is the fundamental trade-off in supply chain policy design.
 
 3. **Reduce the demand step.** Change `D_STEP` from 12 to 11 (a 10% demand increase). Is the bullwhip amplitude at the producer roughly half of the 20% case, or more or less than half? If the response is superlinear — larger relative to the perturbation at small step sizes — what does that imply about the risk of apparently minor demand fluctuations propagating through long supply chains?
+:::
+
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- Try changing these parameters ---
+tau    = 3.0    # fulfillment delay at each node (weeks); try 1.0 for minimal delay
+D_STEP = 12.0   # elevated demand after step (try 11.0 for 10% increase, 14 for 40%)
+amplify = 1.0   # ordering aggressiveness (try 2.0 for panic ordering)
+# Spread inventory correction over longer horizon:
+# replace 1.0 with 3.0 in adj = N * max(tau, 1.0) below (What to try #2)
+adj_multiplier = 1.0
+
+D_BASE = 10.0; I_TARGET = 20.0; I_INIT = 20.0; T_STEP = 8.0
+T_END = 60.0; DT = 0.05
+STEPS = int(T_END / DT)
+T = np.arange(STEPS) * DT
+
+I_r = I_d = I_p = I_INIT
+P_r = D_BASE * tau; P_d = D_BASE * tau
+OR_r = OR_d = OR_p = D_BASE
+rec_I_r  = np.empty(STEPS); rec_I_r[0]  = I_r
+rec_I_d  = np.empty(STEPS); rec_I_d[0]  = I_d
+rec_I_p  = np.empty(STEPS); rec_I_p[0]  = I_p
+rec_OR_r = np.empty(STEPS); rec_OR_r[0] = OR_r
+rec_OR_p = np.empty(STEPS); rec_OR_p[0] = OR_p
+
+adj = adj_multiplier * max(tau, 1.0)
+for i in range(1, STEPS):
+    d = D_STEP if T[i] >= T_STEP else D_BASE
+    arrive_r = P_r / tau; arrive_d = P_d / tau
+    ship_r = min(I_r, d); ship_d = min(I_d, OR_r); ship_p = min(I_p, OR_d)
+    I_r = max(0.0, I_r + (arrive_r - ship_r) * DT)
+    I_d = max(0.0, I_d + (arrive_d - ship_d) * DT)
+    I_p = max(0.0, I_p + (OR_p - ship_p) * DT)
+    P_r = max(0.0, P_r + (OR_r - arrive_r) * DT)
+    P_d = max(0.0, P_d + (OR_d - arrive_d) * DT)
+    OR_r = max(0.0, d    + amplify * (I_TARGET - I_r) / adj)
+    OR_d = max(0.0, OR_r + amplify * (I_TARGET - I_d) / adj)
+    OR_p = max(0.0, OR_d + amplify * (I_TARGET - I_p) / adj)
+    rec_I_r[i] = I_r; rec_I_d[i] = I_d; rec_I_p[i] = I_p
+    rec_OR_r[i] = OR_r; rec_OR_p[i] = OR_p
+
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4))
+ax1.axvline(T_STEP, color="#ccc", linewidth=0.8)
+ax1.axhline(I_TARGET, color="#ccc", linestyle=":", linewidth=0.8)
+ax1.plot(T, rec_I_r, color="#111", linewidth=1.4, label="Retailer")
+ax1.plot(T, rec_I_d, color="#888", linewidth=1.4, linestyle="--", label="Distributor")
+ax1.plot(T, rec_I_p, color="#d52a2a", linewidth=1.8, label="Producer")
+ax1.set_xlabel("Week"); ax1.set_ylabel("Inventory (units)")
+ax1.set_title(f"Inventory  τ={tau}, D_STEP={D_STEP}")
+ax1.legend(frameon=False, fontsize=8.5)
+ax1.spines["top"].set_visible(False); ax1.spines["right"].set_visible(False)
+
+ax2.axvline(T_STEP, color="#ccc", linewidth=0.8)
+ax2.axhline(D_STEP, color="#ccc", linestyle=":", linewidth=0.8)
+ax2.plot(T, rec_OR_r, color="#111", linewidth=1.4, label="Retailer orders")
+ax2.plot(T, rec_OR_p, color="#d52a2a", linewidth=1.8, label="Producer orders")
+ax2.set_xlabel("Week"); ax2.set_ylabel("Order rate (units/week)")
+ax2.set_title(f"Order rates  amplify={amplify}, adj×{adj_multiplier}")
+ax2.legend(frameon=False, fontsize=8.5)
+ax2.spines["top"].set_visible(False); ax2.spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+print(f"Producer inventory range: {rec_I_p.min():.1f} – {rec_I_p.max():.1f} (target {I_TARGET})")
+```
 :::
 
 The bullwhip is not primarily a demand-forecasting problem. Giving each node perfect information about consumer demand — the common prescription — reduces but does not eliminate the oscillation, because the oscillation is driven by the combination of delay and inventory correction, not by forecasting error. The structural interventions are to reduce the delay (faster logistics, smaller order batches, more frequent replenishment cycles) or to change the ordering policy (smooth the correction term over a longer adjustment horizon). Both reduce the feedback gain that amplifies the upstream signal. The model makes this diagnostic precise: it identifies which structural parameter is the dominant driver of amplitude, and which interventions would have the largest effect per unit of cost.

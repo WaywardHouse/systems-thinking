@@ -446,6 +446,60 @@ plt.show()
 3. **Map this to a data engineering context.** Two cloud providers compete for enterprise customers. What plays the role of agglomeration (`alpha`) — the network effect that makes a larger platform more valuable to each new customer? What plays the role of congestion (`gamma`) — the factor that makes a dominant platform less attractive as it grows? What would a migration rate (`mu`) look like for cloud switching — and why is it typically an order of magnitude lower than for human migration? What does that imply for lock-in timescales?
 :::
 
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- Try changing these parameters ---
+alpha = 0.12   # agglomeration elasticity (try 0.15 for stronger concentration)
+gamma = 0.08   # congestion elasticity (try alpha == gamma for balanced case)
+mu    = 0.15   # migration responsiveness (try 0.02 for slow cloud switching)
+n_seeds = 8   # number of random starting conditions
+
+P_TOTAL, P_REF = 2_000_000, 1_000_000
+W0, C0 = 60_000.0, 50_000.0
+DT, T_END = 1.0, 200
+THRESH_HI, THRESH_LO = 0.55, 0.45
+
+def run(seed):
+    np.random.seed(seed)
+    eps = np.random.uniform(-0.05, 0.05)
+    pa = P_TOTAL / 2.0 * (1.0 + eps)
+    pb = P_TOTAL - pa
+    steps = int(T_END / DT) + 1
+    share = np.empty(steps); share[0] = pa / P_TOTAL
+    for i in range(1, steps):
+        a_a = W0 * (pa / P_REF)**alpha - C0 * (pa / P_REF)**gamma
+        a_b = W0 * (pb / P_REF)**alpha - C0 * (pb / P_REF)**gamma
+        flow = mu * (pa * pb / P_TOTAL) * (a_a - a_b)
+        pa = max(1.0, min(P_TOTAL - 1.0, pa + flow * DT))
+        pb = P_TOTAL - pa
+        share[i] = pa / P_TOTAL
+    return share
+
+years = np.arange(int(T_END) + 1)
+fig, ax = plt.subplots(figsize=(8, 4))
+a_dom = b_dom = mid = 0
+for seed in range(n_seeds):
+    share = run(seed)
+    final = share[-1]
+    if final > THRESH_HI:   color, lw, zorder = "#d52a2a", 1.6, 3; a_dom += 1
+    elif final < THRESH_LO: color, lw, zorder = "#111111", 1.6, 2; b_dom += 1
+    else:                   color, lw, zorder = "#888888", 1.2, 1; mid   += 1
+    ax.plot(years, share, color=color, linewidth=lw, alpha=0.85, zorder=zorder)
+
+ax.axhline(0.5, color="#ccc", linestyle="--", linewidth=0.8)
+ax.set_xlim(0, T_END); ax.set_ylim(0, 1)
+ax.set_xlabel("Year"); ax.set_ylabel("City A population share")
+ax.set_title(f"Two-city model  α={alpha}, γ={gamma}, μ={mu}")
+ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
+plt.tight_layout()
+plt.show()
+print(f"City A dominant: {a_dom}/{n_seeds}  |  City B dominant: {b_dom}/{n_seeds}  |  Near-equal: {mid}/{n_seeds}")
+```
+:::
+
 > Figure 5.5. Two-city agglomeration model across three parameter scenarios (Scenario 1: α=0.12, γ=0.08; Scenario 2: α=0.15, γ=0.08; Scenario 3: α=0.10, γ=0.09), each run eight times from randomly perturbed equal initial conditions. Red traces: City A ends dominant (share > 0.55). Black traces: City B ends dominant (share < 0.45). Grey traces: near-equal outcomes. The reinforcing agglomeration loop amplifies tiny early advantages into near-complete dominance; the balancing congestion loop determines the speed and ceiling of that dominance. Path dependence is visible in every panel: structural parameters determine the shape of the outcome distribution, not which city wins.
 
 ---

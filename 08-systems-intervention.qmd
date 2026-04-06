@@ -459,6 +459,84 @@ plt.show()
 3. **Model a technology shock.** At year 20, halve `UNIT_C` (fishing technology improves, cutting costs). How does this change the open-access equilibrium F_OA? Does the HCR automatically compensate for the technology shock, or does it need recalibration? This tests the structural durability of the LP 6 intervention: does the rule continue to work when the underlying economic conditions change?
 :::
 
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- Try changing these parameters ---
+PHI      = 0.50   # effort adjustment speed (try 2.0 for faster economic feedback)
+UNIT_C   = 0.50   # cost per unit effort (halve after year 20 for technology shock)
+# To model technology shock: set UNIT_C_POST to 0.25 (halved cost after year 20)
+UNIT_C_POST = 0.50   # cost after year 20 (same as UNIT_C = no shock)
+# Allee effect: set F_MIN > 0 to add depensation
+F_MIN    = 0.0    # minimum viable population (try 100 to add Allee effect)
+
+R = 0.30; K = 1000.0; Q = 0.0012; PRICE = 3.0
+F_0 = 800.0; E_0 = 80.0; T_END = 80.0; DT = 0.05
+
+MSY = R * K / 4; F_MSY = K / 2
+HCR_HMAX = 0.65 * MSY; HCR_FTGT = 500.0; HCR_FFLR = 150.0
+H_FIXED = 0.70 * MSY
+STEPS = int(T_END / DT)
+T = np.arange(STEPS) * DT
+
+def hcr(F):
+    if F >= HCR_FTGT: return HCR_HMAX
+    elif F >= HCR_FFLR: return HCR_HMAX * (F - HCR_FFLR) / (HCR_FTGT - HCR_FFLR)
+    return 0.0
+
+def run(scenario):
+    F, E = F_0, E_0
+    rec_F = np.empty(STEPS); rec_H = np.empty(STEPS)
+    rec_F[0] = F; rec_H[0] = H_FIXED if scenario == 1 else Q * E * F
+    for i in range(1, STEPS):
+        t_now = T[i]
+        uc = UNIT_C_POST if t_now >= 20 else UNIT_C
+        # Allee effect on growth
+        if F_MIN > 0 and F < K / 2:
+            r_eff = R * max(0, (F - F_MIN) / (K / 2 - F_MIN))
+        else:
+            r_eff = R
+        growth = r_eff * F * (1.0 - F / K)
+        if scenario == 1:
+            H = H_FIXED; dE = 0.0
+        elif scenario == 2:
+            H = Q * E * F; dE = PHI * E * (PRICE * Q * F - uc)
+        else:
+            H = min(Q * E * F, hcr(F)); dE = PHI * E * (PRICE * Q * F - uc)
+        F = max(0.0, F + (growth - H) * DT)
+        E = max(0.0, E + dE * DT)
+        rec_F[i] = F; rec_H[i] = H
+    return rec_F, rec_H
+
+F1, H1 = run(1); F2, H2 = run(2); F3, H3 = run(3)
+F_OA = UNIT_C_POST / (PRICE * Q)
+
+fig, (ax_f, ax_h) = plt.subplots(1, 2, figsize=(11, 4))
+ax_f.axhline(F_MSY, color="#ccc", linestyle=":", linewidth=0.8)
+ax_f.axhline(F_OA,  color="#fcc", linestyle=":", linewidth=0.8)
+ax_f.plot(T, F1, color="#888", linestyle="--", linewidth=1.6, label="Fixed quota")
+ax_f.plot(T, F2, color="#d52a2a", linewidth=1.8, label="Open access")
+ax_f.plot(T, F3, color="#111", linewidth=1.8, label="HCR")
+ax_f.set_xlabel("Year"); ax_f.set_ylabel("Fish stock (thousand tonnes)")
+ax_f.set_title(f"PHI={PHI}, UNIT_C→{UNIT_C_POST} at yr 20, F_MIN={F_MIN}")
+ax_f.legend(frameon=False, fontsize=8.5)
+ax_f.spines["top"].set_visible(False); ax_f.spines["right"].set_visible(False)
+
+ax_h.axhline(MSY, color="#ccc", linestyle=":", linewidth=0.8)
+ax_h.plot(T, H1, color="#888", linestyle="--", linewidth=1.6)
+ax_h.plot(T, H2, color="#d52a2a", linewidth=1.8)
+ax_h.plot(T, H3, color="#111", linewidth=1.8)
+ax_h.set_xlabel("Year"); ax_h.set_ylabel("Harvest rate (thousand tonnes/yr)")
+ax_h.spines["top"].set_visible(False); ax_h.spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+print(f"Open-access equilibrium F_OA = {F_OA:.1f} Gt  (F_MSY = {F_MSY:.0f} Gt)")
+```
+:::
+
 The simulation makes the leverage point argument precise. All three scenarios use the same fish population dynamics and the same economic incentive structure (effort grows when profitable). What differs is only the management rule. The fixed quota works when correctly set but fails under pressure (no self-correcting mechanism). The open-access scenario depletes the stock to its economically minimal level. The HCR maintains the stock near the biological optimum through a structural feedback that automatically reduces the harvest cap as the stock falls.
 
 The HCR is not a better number. It is a different structure. The same economic actors, the same biological system, the same profit incentives — different rules, different outcome. The stock is maintained not because anyone is choosing to conserve it, but because the rule makes conservation the individually rational choice.

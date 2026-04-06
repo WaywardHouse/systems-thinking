@@ -358,6 +358,89 @@ plt.show()
 3. **Set DENSITY_A = 0.30 and DENSITY_B = 0.60** (asymmetric populations). What happens to the spatial structure of the final state? Is the minority group more or less segregated than in the symmetric case?
 :::
 
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.colors import ListedColormap
+
+# --- Try changing these parameters ---
+GRID_SIZE  = 30     # grid dimension (try 60 for a larger city)
+DENSITY_A  = 0.35   # fraction of cells occupied by type A (try 0.30)
+DENSITY_B  = 0.35   # fraction of cells occupied by type B (try 0.60)
+THRESHOLD  = 0.33   # satisfaction threshold: fraction of same-type neighbours required
+N_STEPS    = 50     # number of simulation steps
+
+np.random.seed(42)
+n_cells = GRID_SIZE * GRID_SIZE
+n_a = int(n_cells * DENSITY_A)
+n_b = int(n_cells * DENSITY_B)
+flat = np.zeros(n_cells, dtype=np.int8)
+flat[:n_a] = 1
+flat[n_a:n_a + n_b] = 2
+np.random.shuffle(flat)
+grid = flat.reshape(GRID_SIZE, GRID_SIZE)
+
+def neighbour_counts(g):
+    from numpy.lib.stride_tricks import sliding_window_view
+    padded = np.pad(g, 1, mode="wrap")
+    windows = sliding_window_view(padded, (3, 3))
+    same = np.zeros_like(g, dtype=np.int8)
+    occ  = np.zeros_like(g, dtype=np.int8)
+    for dr in range(3):
+        for dc in range(3):
+            if dr == 1 and dc == 1: continue
+            nb = windows[:, :, dr, dc]
+            occ  += (nb > 0).astype(np.int8)
+            same += (nb == g).astype(np.int8) * (g > 0).astype(np.int8)
+    return same, occ
+
+def segregation_index(g):
+    same, occ = neighbour_counts(g)
+    occupied = g > 0
+    fracs = np.where((occupied) & (occ > 0), same / occ, np.nan)
+    return float(np.nanmean(fracs))
+
+def step(g, threshold):
+    same, occ = neighbour_counts(g)
+    occupied  = g > 0
+    satisfied = np.where(occupied & (occ > 0), same / occ >= threshold, True)
+    unsatisfied = list(zip(*np.where(~satisfied & occupied)))
+    empty       = list(zip(*np.where(g == 0)))
+    np.random.shuffle(unsatisfied)
+    for pos in unsatisfied:
+        if not empty: break
+        dest = empty.pop(np.random.randint(len(empty)))
+        g[dest], g[pos] = g[pos], 0
+        empty.append(pos)
+    return g
+
+grid_init = grid.copy()
+seg_series = [segregation_index(grid)]
+for _ in range(N_STEPS):
+    grid = step(grid, THRESHOLD)
+    seg_series.append(segregation_index(grid))
+
+cmap = ListedColormap(["#f5f5f5", "#d52a2a", "#111111"])
+fig, axes = plt.subplots(1, 3, figsize=(11, 4))
+
+axes[0].imshow(grid_init, cmap=cmap, vmin=0, vmax=2, interpolation="nearest")
+axes[0].set_title("Initial state"); axes[0].axis("off")
+
+axes[1].imshow(grid, cmap=cmap, vmin=0, vmax=2, interpolation="nearest")
+axes[1].set_title(f"After {N_STEPS} steps  (T={THRESHOLD})"); axes[1].axis("off")
+
+axes[2].plot(seg_series, color="#d52a2a", linewidth=1.5)
+axes[2].set_xlabel("Step"); axes[2].set_ylabel("Segregation index")
+axes[2].set_ylim(0.4, 1.0)
+axes[2].spines["top"].set_visible(False); axes[2].spines["right"].set_visible(False)
+
+plt.tight_layout()
+plt.show()
+print(f"Initial segregation: {seg_series[0]:.3f}  →  Final: {seg_series[-1]:.3f}")
+```
+:::
+
 ---
 
 ## Exercises

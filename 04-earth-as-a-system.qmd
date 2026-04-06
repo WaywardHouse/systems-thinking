@@ -509,6 +509,62 @@ plt.show()
 3. **Map this model to a data pipeline system.** In a large satellite Earth observation processing pipeline: what plays the role of the atmosphere stock? The ocean stock? The anthropogenic emission flow? What would "ocean acidification" look like in a data pipeline context — a stock accumulating something that degrades future processing capacity? Write down the analogy explicitly before continuing.
 :::
 
+::: {.pyodide-cell}
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- Try changing these parameters ---
+# To set emissions to zero in 2050: edit the emissions() function below
+# To simulate ocean sink saturation: change k_AO_multiplier below 1.0 after 2050
+k_AO_multiplier = 1.0   # try 0.80 to simulate ocean sink saturation after 2050
+
+A0, O0, L0 = 590.0, 38000.0, 2150.0
+F_OA, F_LA, F_W = 90.0, 120.0, 0.2
+k_AO = F_OA / A0
+k_AL = F_LA / A0
+PPM_CONV = 2.13
+dt = 1.0
+years = np.arange(1750, 2151, dt)
+
+def emissions(year, scenario):
+    if scenario == 0: return 0.0
+    if year < 1850: return 0.5
+    if year < 1950: return 0.5 + (year - 1850) / 100.0 * 5.5
+    if year < 2023: return 6.0 + (year - 1950) / 73.0 * 5.0
+    if scenario == 1:
+        return 11.0 + (year - 2023) / 77.0 * 3.0 if year <= 2100 else 14.0
+    # Scenario 2: reduced — edit this to set emissions to 0 in 2050
+    return max(0.0, 11.0 + (year - 2023) / 52.0 * (2.0 - 11.0)) if year <= 2075 else 2.0
+
+scenarios = {"Pre-industrial eq.": (0, "#888888", "--"), "BAU": (1, "#d52a2a", "-"), "Reduced": (2, "#111111", "-")}
+
+fig, ax = plt.subplots(figsize=(9, 4))
+for label, (sid, color, ls) in scenarios.items():
+    A, O = A0, O0
+    ppm_arr = [A / PPM_CONV]
+    for year in years[:-1]:
+        k_ao = k_AO * (k_AO_multiplier if year >= 2050 else 1.0)
+        E = emissions(year, sid)
+        dA = F_OA - k_ao * A + F_LA - k_AL * A + F_W + E
+        dO = k_ao * A - F_OA
+        A = max(0.0, A + dA * dt)
+        O += dO * dt
+        ppm_arr.append(A / PPM_CONV)
+    ax.plot(years, ppm_arr, color=color, linestyle=ls, linewidth=1.6, label=label)
+
+ax.axhline(280, color="#aaa", linestyle="--", linewidth=0.8)
+ax.axvline(2023, color="#aaa", linestyle="--", linewidth=0.8)
+ax.set_xlim(1750, 2150); ax.set_ylim(250, 700)
+ax.set_xlabel("Year"); ax.set_ylabel("Atmospheric CO₂ (ppm)")
+ax.set_title(f"3-box carbon cycle  (ocean sink multiplier = {k_AO_multiplier})")
+ax.legend(frameon=False, fontsize=9)
+ax.spines["top"].set_visible(False); ax.spines["right"].set_visible(False)
+plt.tight_layout()
+plt.show()
+```
+:::
+
 > Figure 4.5. 3-box carbon cycle model under three emission scenarios, 1750–2150. Top: atmospheric CO₂ (ppm) — even aggressive emissions reduction slows accumulation rather than reversing it on this timescale, because the stock integrates all past emissions. Centre: ocean carbon stock (GtC) — continues growing in all scenarios, corresponding to ongoing acidification. Bottom: land biosphere carbon with land sink uncertainty (dashed) from 2050 onward. The model demonstrates why "net-zero emissions" stabilises the atmospheric stock — it does not reduce it.
 
 ---
