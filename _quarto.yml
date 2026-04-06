@@ -1,6 +1,8 @@
 project:
   type: book
   output-dir: _site
+  resources:
+    - assets/
 
 book:
   title: "Systems Thinking for Modellers"
@@ -43,10 +45,10 @@ format:
   html:
     theme: none
     css:
-      - _extensions/wayward-book/wayward-book.css
+      - assets/css/quarto-wayward.css
       - lightbox.css
     include-in-header: _extensions/wayward-book/head.html
-    include-after-body: lightbox.html
+    include-after-body: _include/after-body.html
     smooth-scroll: true
     toc: true
     toc-depth: 3

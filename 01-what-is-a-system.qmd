@@ -278,6 +278,36 @@ plt.show()
 3. **Start with a larger stock (S0 = 200 km³)** but keep the same flows. How does response time change? What does this tell you about large ice sheets versus small mountain glaciers?
 :::
 
+::: {.pyodide-cell}
+```python
+# Glacier stock-flow simulation — edit and run (Shift+Enter)
+# Try changing acc, abl, or S0 and observe the response time
+
+import numpy as np
+
+years = 120
+dt    = 1.0
+acc   = 1.2   # accumulation (km³/yr)  ← try 0.8, 1.0, 1.4
+abl   = 1.5   # ablation    (km³/yr)  ← try 1.2, 1.5, 1.8
+S0    = 100.0  # initial stock (km³)   ← try 50, 200
+
+S = S0
+for t in range(years):
+    net = acc - abl
+    S   = max(0.0, S + net * dt)
+    if S == 0.0:
+        print(f"Glacier gone at year {t+1}")
+        break
+else:
+    print(f"Stock after {years} yrs: {S:.1f} km³")
+
+tau = S0 / abs(acc - abl) if acc != abl else float('inf')
+print(f"Response time τ = {tau:.1f} years")
+print(f"Net flow: {acc - abl:+.2f} km³/yr")
+```
+:::
+
+
 > Figure 1.3. Ice mass over 120 years under three constant-flow scenarios. In all three cases the stock changes at a constant rate — the curve is a straight line. The behaviour diverges completely depending on whether inflow exceeds, equals, or falls short of outflow. This is the simplest demonstration of what a stock does: it accumulates the difference between flows, and its trajectory is determined entirely by that difference over time.
 
 ---
