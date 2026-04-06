@@ -43,9 +43,8 @@ bibliography: references.bib
 
 format:
   html:
-    theme: none
     css:
-      - assets/css/wayward-book.css
+      - _extensions/wayward-book/wayward-book.css
       - lightbox.css
     include-in-header: _extensions/wayward-book/head.html
     include-after-body: _include/after-body.html

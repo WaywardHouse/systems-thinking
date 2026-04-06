@@ -1,41 +1,6 @@
-<footer class="wayward-footer">
-  <div class="wayward-footer__inner">
-    <div class="wayward-footer__brand">
-      <div class="wayward-footer__logo">WaywardHouse<span>.</span></div>
-      <p>Understanding how place, economy, and environment interact through analysis, modelling, and open tools.</p>
-    </div>
-    <nav class="wayward-footer__group" aria-labelledby="footer-reading">
-      <h2 id="footer-reading">Reading</h2>
-      <a href="/articles/">Articles</a>
-      <a href="/learn/">Library</a>
-      <a href="/archive.html">Archive</a>
-    </nav>
-    <nav class="wayward-footer__group" aria-labelledby="footer-site">
-      <h2 id="footer-site">Site</h2>
-      <a href="/start-here.html">Choose Your Path</a>
-      <a href="/about.html">About</a>
-      <a href="/contact.html">Contact</a>
-    </nav>
-    <nav class="wayward-footer__group" aria-labelledby="footer-resources">
-      <h2 id="footer-resources">Resources</h2>
-      <a href="/topics/">All Topics</a>
-      <a href="/privacy.html">Privacy Policy</a>
-      <a href="/terms.html">Terms of Use</a>
-    </nav>
-  </div>
-</footer>
-
-<!-- Main site Vite bundle — provides full WaywardHouse branding when deployed.
-     Works at wayward.house/learn/systems-thinking/ because the main site
-     deploys /assets/dist/main.js to the same domain. -->
-<script type="module" src="/assets/dist/main.js"></script>
-<script type="module" src="/assets/js/core.js"></script>
-
-<!-- Book-specific scripts -->
 <script type="module" src="assets/js/pyodide-cells.js"></script>
 <script>
 (function () {
-  // Build overlay DOM
   var overlay = document.createElement('div');
   overlay.id = 'diagram-lightbox';
 
@@ -52,12 +17,9 @@
   document.body.appendChild(overlay);
 
   function openLightbox(svgEl) {
-    // innerHTML from outerHTML gives a fresh parse — avoids cloneNode quirks
-    // with scoped <style> blocks and duplicate id issues
     content.innerHTML = svgEl.outerHTML;
     var svg = content.querySelector('svg');
     if (svg) {
-      // Width 100% fills the panel; viewBox provides the aspect ratio for height
       svg.setAttribute('width', '100%');
       svg.removeAttribute('height');
       svg.style.removeProperty('max-width');
@@ -91,8 +53,6 @@
     document.querySelectorAll('svg.mermaid-js').forEach(attachTo);
   }
 
-  // Quarto's mermaid-init.js renders asynchronously on window.load —
-  // watch for SVGs being inserted rather than using a fixed timeout.
   var observer = new MutationObserver(function (mutations) {
     mutations.forEach(function (m) {
       m.addedNodes.forEach(function (node) {
@@ -106,18 +66,14 @@
     });
   });
 
-  // Start observing as soon as body is available
-  function startObserver() {
-    observer.observe(document.body, { childList: true, subtree: true });
-    // Catch any already-rendered diagrams (e.g. from freeze cache)
-    scanAndAttach();
-  }
-
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', startObserver);
+    document.addEventListener('DOMContentLoaded', function () {
+      observer.observe(document.body, { childList: true, subtree: true });
+      scanAndAttach();
+    });
   } else {
-    startObserver();
+    observer.observe(document.body, { childList: true, subtree: true });
+    scanAndAttach();
   }
 })();
 </script>
-<script type="module" src="assets/js/pyodide-cells.js"></script>
