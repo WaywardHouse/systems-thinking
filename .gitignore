@@ -6,3 +6,6 @@ _freeze/site_libs/
 .DS_Store
 __pycache__/
 *.pyc
+
+/.quarto/
+**/*.quarto_ipynb

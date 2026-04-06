@@ -41,11 +41,12 @@ bibliography: references.bib
 
 format:
   html:
-    theme: none
+    theme: flatly
     toc: true
     number-sections: true
     code-fold: true
     lightbox: true
+    html-math-method: katex
     css: lightbox.css
     include-after-body: lightbox.html
 
