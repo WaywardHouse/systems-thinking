@@ -389,5 +389,3 @@ Choose a system you work with or depend on (a data pipeline, a transit network, 
 4. Are there indicators you could monitor that would signal decreasing resilience?
 
 ---
-
-*Status: draft — all structural elements complete: tipping points (three domain examples, three Mermaid diagrams), emergence vs. complexity distinction, resilience (including data/AI example), Schelling segregation simulation, three cross-link callouts.*

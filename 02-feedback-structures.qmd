@@ -421,4 +421,3 @@ The ice-albedo feedback is a reinforcing loop. But the Arctic has not experience
 
 ---
 
-*Status: draft — all structural elements complete: two feedback types, three examples each, five archetypes, delay dynamics, thermostat simulation, five Mermaid causal loop diagrams.*
