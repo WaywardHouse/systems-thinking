@@ -45,7 +45,7 @@ format:
   html:
     theme: none
     css:
-      - assets/css/quarto-wayward.css
+      - assets/css/wayward-book.css
       - lightbox.css
     include-in-header: _extensions/wayward-book/head.html
     include-after-body: _include/after-body.html
