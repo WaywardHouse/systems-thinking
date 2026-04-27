@@ -9,3 +9,10 @@ __pycache__/
 
 /.quarto/
 **/*.quarto_ipynb
+
+# wrangler files
+.wrangler
+.dev.vars*
+!.dev.vars.example
+.env*
+!.env.example
